@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { getNetworkConfig } from "./config/networks.js";
 import { StellarClient } from "./core/stellarClient.js";
+import { registerAgentCommand } from "./demo/cliAgent.js";
 const program = new Command();
 program
     .name("stellar-defi-agent-kit")
@@ -49,5 +50,6 @@ program
         process.exit(1);
     }
 });
+registerAgentCommand(program);
 program.parse();
 //# sourceMappingURL=index.js.map

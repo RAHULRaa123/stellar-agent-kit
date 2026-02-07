@@ -28,6 +28,19 @@ node dist/index.js balance GABC... --network=mainnet
 
 Output is JSON array of `{ code, issuer, balance }`.
 
+### Agent (chat with DeFi agent)
+
+Interactive loop: ask for balance checks or swap quotes; the agent calls tools and replies.
+
+```bash
+# Set your OpenAI API key, then:
+npm run build
+node dist/index.js agent
+# or: node dist/index.js agent --api-key sk-...
+```
+
+At the prompt try: "What's the balance of G..." or "Get a quote to swap 10 XLM to USDC". Type `exit` to quit.
+
 ### Pay
 
 Send XLM or a custom asset:
@@ -62,7 +75,8 @@ const result = await client.sendPayment("S...", "G...", "10");
 ## Requirements
 
 - Node 18+
-- Zod (validation), Commander (CLI), @stellar/stellar-sdk
+- Zod (validation), Commander (CLI), @stellar/stellar-sdk, openai (for `agent` command)
+- For agent: set `OPENAI_API_KEY` or pass `--api-key`
 
 ## License
 

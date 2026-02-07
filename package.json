@@ -12,10 +12,19 @@
     "balance": "node dist/index.js balance",
     "pay": "node dist/index.js pay",
     "start": "node dist/index.js",
+    "agent": "node dist/index.js agent",
     "check": "node -e \"import('./dist/core/stellarClient.js').then(m => console.log('✅ StellarClient imported')).catch(e => { console.error(e); process.exit(1); })\"",
-    "precheck": "npm run build"
+    "precheck": "npm run build",
+    "check:tools": "node -e \"import('./dist/tools/agentTools.js').then(t => console.log('Tools ready:', t.tools?.length ?? 0)).catch(e => { console.error(e); process.exit(1); })\"",
+    "precheck:tools": "npm run build"
   },
-  "keywords": ["stellar", "soroban", "defi", "blockchain", "cli"],
+  "keywords": [
+    "stellar",
+    "soroban",
+    "defi",
+    "blockchain",
+    "cli"
+  ],
   "author": "",
   "license": "MIT",
   "type": "module",
@@ -25,6 +34,7 @@
   "dependencies": {
     "@stellar/stellar-sdk": "^14.0.0",
     "commander": "^12.0.0",
+    "openai": "^4.104.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
