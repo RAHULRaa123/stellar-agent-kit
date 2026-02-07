@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { MobileMenu } from "./mobile-menu"
+import { WalletData } from "./wallet-data"
 
 export function Navbar() {
   const [isVisible, setIsVisible] = useState(true)
@@ -55,6 +57,13 @@ export function Navbar() {
           >
             Capabilities
           </button>
+          <Link
+            href="/swap"
+            className="px-4 py-2 text-white hover:text-zinc-300 transition-colors"
+          >
+            Swap
+          </Link>
+          <WalletData />
           <a
             href="https://github.com/stellar/stellar-agent-kit"
             target="_blank"

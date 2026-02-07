@@ -4,6 +4,12 @@
   "description": "Stellar DeFi agent kit for hackathon - balance checks and payments with CLI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./config/networks": "./dist/config/networks.js",
+    "./core/stellarClient": "./dist/core/stellarClient.js",
+    "./defi/soroSwapClient": "./dist/defi/soroSwapClient.js"
+  },
   "bin": {
     "stellar-defi-agent-kit": "dist/index.js"
   },
@@ -32,6 +38,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@stellar/freighter-api": "^6.0.1",
     "@stellar/stellar-sdk": "^14.0.0",
     "commander": "^12.0.0",
     "dotenv": "^17.2.4",
