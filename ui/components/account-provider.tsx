@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react"
-import { isConnected, isAllowed, getAddress, getNetwork, requestAccess } from "@stellar/freighter-api"
+import { isConnected, isAllowed, getAddress, getNetwork, requestAccess, signTransaction } from "@stellar/freighter-api"
 
 export interface AccountData {
   publicKey: string
@@ -15,6 +15,9 @@ interface AccountContextType {
   connect: () => Promise<void>
   disconnect: () => void
   refreshAccount: () => Promise<void>
+  signTransaction: (xdr: string, options?: { networkPassphrase?: string }) => Promise<string>
+  publicKey: string | null
+  isConnected: boolean
 }
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined)
@@ -47,7 +50,7 @@ async function checkConnection(): Promise<AccountData | null> {
 
 export function AccountProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<AccountData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
   const refreshAccount = useCallback(async () => {
     try {
@@ -63,7 +66,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
-    setIsLoading(true)
     checkConnection()
       .then((next) => {
         if (!cancelled) setAccount(next)
@@ -73,9 +75,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
           console.error("Error checking wallet connection:", error)
           setAccount(null)
         }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false)
       })
     return () => {
       cancelled = true
@@ -118,12 +117,48 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     setAccount(null)
   }, [])
 
+  const handleSignTransaction = useCallback(async (xdr: string, options?: { networkPassphrase?: string }) => {
+    if (!account) {
+      throw new Error("No wallet connected")
+    }
+
+    try {
+      const result = await signTransaction(xdr, {
+        networkPassphrase: options?.networkPassphrase || "Public Global Stellar Network ; September 2015",
+        accountToSign: account.publicKey,
+      })
+
+      if (result.error) {
+        const err = result.error
+        const message =
+          typeof err === "object" && err !== null && "message" in err && typeof (err as { message?: unknown }).message === "string"
+            ? (err as { message: string }).message
+            : typeof err === "string"
+              ? err
+              : "Transaction signing failed"
+        throw new Error(message)
+      }
+
+      const signed = (result as { signedTxXdr?: string }).signedTxXdr ?? (result as { signedXDR?: string }).signedXDR
+      if (!signed) {
+        throw new Error("Wallet did not return a signed transaction")
+      }
+      return signed
+    } catch (error) {
+      console.error("Error signing transaction:", error)
+      throw error
+    }
+  }, [account])
+
   const value: AccountContextType = {
     account,
     isLoading,
     connect,
     disconnect,
     refreshAccount,
+    signTransaction: handleSignTransaction,
+    publicKey: account?.publicKey || null,
+    isConnected: !!account,
   }
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>

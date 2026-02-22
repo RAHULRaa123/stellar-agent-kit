@@ -65,12 +65,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: "get_stellar_contract",
-      description: "Use this tool when the user asks for a Stellar/Soroban contract ID or protocol address (e.g. SoroSwap mainnet). Returns the Soroban contract ID. Call with protocol (e.g. 'soroswap') and optional network (mainnet only).",
+      description: "Use this tool when the user asks for a Stellar/Soroban contract ID or protocol address. Returns the contract ID or SDK link. Call with protocol: soroswap, blend, fxdao, reflector, allbridge; optional network (mainnet default).",
       inputSchema: {
         type: "object",
         properties: {
-          protocol: { type: "string", description: "Protocol name, e.g. soroswap" },
-          network: { type: "string", enum: ["mainnet"], description: "Network (mainnet only)" }
+          protocol: { type: "string", description: "Protocol: soroswap, blend, fxdao, reflector, allbridge" },
+          network: { type: "string", enum: ["mainnet", "testnet"], description: "Network (mainnet default)" }
         },
         required: ["protocol"]
       }
@@ -115,8 +115,22 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   if (name === "get_stellar_contract") {
     const protocol = args?.protocol?.toLowerCase() || "";
     const network = (args?.network || "mainnet").toLowerCase();
-    const ids = protocol === "soroswap" ? { testnet: "CCJUD55AG6W5HAI5LRVNKAE5WDP5XGZBUDS5WNTIVDU7O264UZZE7BRD", mainnet: "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH" } : null;
-    const text = ids ? `${protocol} ${network}: ${ids[network]}` : `Unknown protocol: ${protocol}`;
+    const protocolIds = {
+      soroswap: { testnet: "CCJUD55AG6W5HAI5LRVNKAE5WDP5XGZBUDS5WNTIVDU7O264UZZE7BRD", mainnet: "CAG5LRYQ5JVEUI5TEID72EYOVX44TTUJT5BQR2J6J77FH65PCCFAJDDH" },
+      blend: { mainnet: "CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS" },
+      fxdao: { mainnet: "CCUN4RXU5VNDHSF4S4RKV4ZJYMX2YWKOH6L4AKEKVNVDQ7HY5QIAO4UB", note: "Vaults; see FXDAO_MAINNET in stellar-agent-kit for Locking Pool, USDx, etc." },
+      reflector: { mainnet: "CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M", note: "dex feed; REFLECTOR_ORACLE in stellar-agent-kit has cexDex, fiat" },
+      allbridge: { mainnet: "https://docs-core.allbridge.io/sdk/guides/stellar", note: "No single contract; use Allbridge Core SDK" }
+    };
+    const entry = protocolIds[protocol];
+    const n = network;
+    let text;
+    if (!entry) text = `Unknown protocol: ${protocol}. Supported: ${Object.keys(protocolIds).join(", ")}`;
+    else if ("note" in entry) text = `${protocol} mainnet: ${entry.mainnet}. ${entry.note ?? ""}`;
+    else {
+      const e = entry;
+      text = e[n] ? `${protocol} ${network}: ${e[n]}` : `${protocol} ${network}: not available (mainnet only: ${e.mainnet})`;
+    }
     return { content: [{ type: "text", text }] };
   }
   if (name === "get_sdk_snippet") {
@@ -180,7 +194,11 @@ const res = await x402Fetch(url, undefined, {
 
 ## x402-stellar-sdk
 - Server: x402(options), x402Hono(options), withX402(headers, options), processPaymentMiddleware, verifyPaymentOnChain
-- Client: x402Fetch(input, init?, { payWithStellar })`;
+- Client: x402Fetch(input, init?, { payWithStellar })
+
+## stellar-agent-kit config
+- MAINNET_ASSETS (XLM, USDC), SOROSWAP_AGGREGATOR, BLEND_POOLS_MAINNET, REFLECTOR_ORACLE
+- FXDAO_MAINNET (vaults, lockingPool, usdx, eurx, gbpx, fxg, oracle), ALLBRIDGE_CORE_STELLAR_DOCS (SDK link)`;
     return { content: [{ type: "text", text }] };
   }
   if (name === "get_quote") {

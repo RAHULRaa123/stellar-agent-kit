@@ -27,11 +27,16 @@ export function ConnectButton({ label = "Connect Wallet" }: { label?: string }) 
       await connect();
       toast.success("Wallet connected");
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Failed to connect";
-      if (msg.toLowerCase().includes("declined")) {
+      const msg =
+        (error instanceof Error ? error.message : null) ??
+        (typeof error === "object" && error !== null && "message" in error
+          ? String((error as { message: unknown }).message)
+          : "Failed to connect");
+      const safeMsg = typeof msg === "string" && msg.length > 0 ? msg : "Failed to connect";
+      if (safeMsg.toLowerCase().includes("declined")) {
         toast.error("Connection cancelled");
       } else {
-        toast.error("Failed to connect", { description: msg });
+        toast.error("Failed to connect", { description: safeMsg });
       }
     } finally {
       setIsConnecting(false);

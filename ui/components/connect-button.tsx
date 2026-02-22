@@ -1,10 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { useAccount } from "@/hooks/use-account"
-import { useWallet } from "./wallet-provider"
 import { Wallet } from "lucide-react"
 import { toast } from "sonner"
 
@@ -19,14 +18,21 @@ interface ConnectButtonProps {
 
 export function ConnectButton({
   label = "Connect Wallet",
-  variant = "shiny",
+  variant = "shiny", // Force rebuild
   size = "default",
   className,
   width,
 }: ConnectButtonProps) {
   const { connect, isLoading } = useAccount()
-  const { isFreighterAvailable } = useWallet()
   const [isConnecting, setIsConnecting] = useState(false)
+  const [isFreighterAvailable, setIsFreighterAvailable] = useState(false)
+
+  // Check if Freighter is available
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsFreighterAvailable(!!window.freighter)
+    }
+  }, [])
 
   const handleConnect = async () => {
     if (!isFreighterAvailable) {
@@ -67,7 +73,7 @@ export function ConnectButton({
       <LiquidMetalButton
         label={isConnecting ? "Connecting..." : label}
         onClick={handleConnect}
-        disabled={isLoading || isConnecting}
+        disabled={isLoading || isConnecting || !isFreighterAvailable}
         width={metalWidth}
         className={className}
       />
@@ -78,9 +84,9 @@ export function ConnectButton({
     <Button
       variant={variant}
       onClick={handleConnect}
-      disabled={isLoading || isConnecting}
+      disabled={isLoading || isConnecting || !isFreighterAvailable}
       size={size}
-      className={className ?? "gap-2 px-5 py-2.5 rounded-full"}
+      className={className ?? "gap-2 px-5 py-2.5 rounded-full bg-zinc-800 text-white hover:bg-zinc-700 border-zinc-600"}
     >
       <Wallet className="h-4 w-4" />
       {isConnecting ? "Connecting..." : label}

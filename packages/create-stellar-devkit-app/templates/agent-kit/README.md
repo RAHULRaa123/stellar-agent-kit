@@ -38,14 +38,18 @@ Next.js app with **Connect Wallet** (Freighter) and **all 5 integrated protocols
 - API: `/api/price?symbol=XLM`
 
 ### 🏦 **Lending** (Blend)
-- Supply and borrow assets on Blend protocol
-- Interactive UI for lending operations
-- Uses `stellar-agent-kit` lending methods
+- **Supply assets**: Deposit USDC or XLM as collateral to earn interest
+- **Borrow assets**: Borrow against your collateral on Blend protocol
+- **Real-time transactions**: Built with Freighter wallet integration
+- **Secure signing**: Uses Freighter's secure transaction signing
+- **Transaction tracking**: View transactions on Stellar Expert
 
 ### 🌉 **Bridge** (Allbridge Core)
-- Cross-chain bridge to 10+ networks
-- Ethereum, BSC, Polygon, Solana, and more
-- Asset transfers between chains
+- **Cross-chain transfers**: Bridge assets between Stellar and 10+ networks
+- **Multi-network support**: Ethereum, BSC, Polygon, Solana, Avalanche, and more
+- **Popular assets**: USDC, USDT, ETH, BTC support
+- **Secure bridging**: Powered by Allbridge Core SDK
+- **Real-time execution**: Immediate transaction processing
 
 ### 💰 **FxDAO** (Synthetic Stablecoins)
 - Mint USDx, EURx, GBPx synthetic stablecoins

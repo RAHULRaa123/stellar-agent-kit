@@ -48,8 +48,7 @@ export function WalletData() {
         label="Connect Wallet"
         variant="shiny"
         size="default"
-        width={160}
-        className="shrink-0"
+        width={152}
       />
     )
   }
@@ -64,7 +63,7 @@ export function WalletData() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="shrink-0 rounded-full border-zinc-600 text-white hover:bg-zinc-800 hover:border-zinc-500 min-w-[200px]"
+          className="shrink-0 rounded-full border-zinc-600 bg-transparent text-white hover:bg-zinc-800 hover:border-zinc-500 min-w-[200px]"
         >
           {connectedLabel}
         </Button>

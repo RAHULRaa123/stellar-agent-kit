@@ -106,7 +106,10 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     let text: string;
     if (!entry) text = `Unknown protocol: ${protocol}. Supported: ${Object.keys(protocolIds).join(", ")}`;
     else if ("note" in entry) text = `${protocol} mainnet: ${entry.mainnet}. ${entry.note ?? ""}`;
-    else text = entry[n] ? `${protocol} ${network}: ${entry[n]}` : `${protocol} ${network}: not available (mainnet only: ${entry.mainnet})`;
+    else {
+      const e = entry as { mainnet: string; testnet?: string };
+      text = e[n] ? `${protocol} ${network}: ${e[n]}` : `${protocol} ${network}: not available (mainnet only: ${e.mainnet})`;
+    }
     return { content: [{ type: "text", text }] };
   }
   if (name === "get_sdk_snippet") {

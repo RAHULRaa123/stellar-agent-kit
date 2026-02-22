@@ -38,15 +38,28 @@ export function useBalance() {
       })
 
       if (!response.ok) {
-        const error = await response.text()
-        throw new Error(error || 'Failed to fetch balances')
+        const errorText = await response.text()
+        let errorMessage = errorText || 'Failed to fetch balances'
+        
+        // Parse JSON error if possible
+        try {
+          const errorJson = JSON.parse(errorText)
+          if (errorJson.error) {
+            errorMessage = errorJson.error
+          }
+        } catch {
+          // Keep original error text if not JSON
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const balanceData = await response.json()
       setBalances(balanceData)
     } catch (err) {
       console.error("Error fetching balances:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch balances")
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch balances"
+      setError(errorMessage)
       setBalances([])
     } finally {
       setIsLoading(false)

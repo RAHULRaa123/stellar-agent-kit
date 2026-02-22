@@ -24,18 +24,20 @@ export default function Home() {
       <PageTransition>
 
       {/* Hero — centered, large (majority of viewport) with dot pattern background */}
-      <div className="relative min-h-[85vh] w-full">
-        <DotPattern
-          fixed={false}
-          baseColor="#a1a1aa"
-          glowColor="#a78bfa"
-          gap={18}
-          dotSize={3}
-          proximity={140}
-          waveSpeed={0.4}
-          baseOpacityMin={0.35}
-          baseOpacityMax={0.55}
-        />
+      <div className="relative min-h-[85vh] w-full overflow-hidden">
+        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen min-h-full" aria-hidden>
+          <DotPattern
+            fixed={false}
+            baseColor="#71717a"
+            glowColor="#a78bfa"
+            gap={24}
+            dotSize={2}
+            proximity={140}
+            waveSpeed={0.4}
+            baseOpacityMin={0.18}
+            baseOpacityMax={0.32}
+          />
+        </div>
         <div id="hero" className="relative z-20 container mx-auto px-6 lg:px-12 pt-32 pb-40 min-h-[85vh] flex flex-col items-center justify-center text-center">
           <div className="flex flex-col items-center max-w-3xl mx-auto w-full">
             <div className="mb-10 md:mb-14 animate-fade-in">
@@ -154,17 +156,17 @@ export default function Home() {
 
           {/* Try it yourself — code snippet + CTA (dot pattern background) */}
           <section id="try-it" className="relative z-20 py-16 scroll-mt-24 overflow-hidden">
-            <div className="absolute inset-0 -z-10">
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-screen min-h-full -z-10" aria-hidden>
               <DotPattern
                 fixed={false}
-                baseColor="#71717a"
+                baseColor="#52525b"
                 glowColor="#a78bfa"
-                gap={20}
-                dotSize={3}
+                gap={26}
+                dotSize={2}
                 proximity={100}
                 waveSpeed={0.3}
-                baseOpacityMin={0.35}
-                baseOpacityMax={0.55}
+                baseOpacityMin={0.18}
+                baseOpacityMax={0.32}
               />
             </div>
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">

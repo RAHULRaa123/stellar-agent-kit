@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 import {
   Sheet,
@@ -11,14 +12,19 @@ import {
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { WalletData } from "./wallet-data"
 
-export function MobileMenu() {
-  const [open, setOpen] = useState(false)
+const NAV_LINKS = [
+  { href: "/docs", label: "Docs" },
+  { href: "/devkit", label: "DevKit" },
+  { href: "/protocols", label: "Protocols" },
+  { href: "/swap", label: "Swap" },
+  { href: "/protocols-ui", label: "Try Protocols" },
+  { href: "/chat", label: "Chat" },
+  { href: "/pricing", label: "Pricing" },
+]
 
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id)
-    if (el) el.scrollIntoView({ behavior: "smooth" })
-    setOpen(false)
-  }
+export function MobileMenu() {
+  const pathname = usePathname()
+  const [open, setOpen] = useState(false)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -35,55 +41,30 @@ export function MobileMenu() {
           <Link
             href="/"
             onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-white hover:text-zinc-200 transition-colors duration-500 ease-out"
+            className={`text-left py-3 px-3 text-base transition-colors duration-500 ease-out ${
+              pathname === "/" ? "text-white" : "text-zinc-400 hover:text-white"
+            }`}
           >
             Home
           </Link>
           <span className="mt-2 mb-1 px-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">
             Resources
           </span>
-          <Link
-            href="/docs"
-            onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
-          >
-            Docs
-          </Link>
-          <Link
-            href="/devkit"
-            onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
-          >
-            DevKit
-          </Link>
-          <Link
-            href="/protocols"
-            onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
-          >
-            Protocols
-          </Link>
-          <Link
-            href="/swap"
-            onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-300 hover:text-white transition-colors duration-500 ease-out"
-          >
-            Swap
-          </Link>
-          <Link
-            href="/chat"
-            onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
-          >
-            Chat
-          </Link>
-          <Link
-            href="/pricing"
-            onClick={() => setOpen(false)}
-            className="text-left py-3 px-3 text-base text-zinc-400 hover:text-white transition-colors duration-500 ease-out"
-          >
-            Pricing
-          </Link>
+          {NAV_LINKS.map(({ href, label }) => {
+            const isActive = pathname === href || pathname.startsWith(href + "/")
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setOpen(false)}
+                className={`text-left py-3 px-3 text-base transition-colors duration-500 ease-out ${
+                  isActive ? "text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                {label}
+              </Link>
+            )
+          })}
           <div className="mt-4 pt-4 border-t border-zinc-800">
             <LiquidMetalButton
               href="https://github.com/stellar/stellar-agent-kit"

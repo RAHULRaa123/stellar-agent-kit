@@ -1,68 +1,85 @@
-"use client";
+"use client"
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { isConnected, isAllowed } from "@stellar/freighter-api";
+import React, { createContext, useContext, useEffect, useState } from "react"
+import { isConnected, isAllowed } from "@stellar/freighter-api"
 
 interface WalletContextType {
-  isFreighterAvailable: boolean;
-  isAllowed: boolean;
-  checkFreighterAvailability: () => Promise<void>;
+  isFreighterAvailable: boolean
+  isAllowed: boolean
+  checkFreighterAvailability: () => Promise<void>
 }
 
-const WalletContext = createContext<WalletContextType | undefined>(undefined);
+const WalletContext = createContext<WalletContextType | undefined>(undefined)
 
 export function useWallet() {
-  const context = useContext(WalletContext);
+  const context = useContext(WalletContext)
   if (context === undefined) {
-    throw new Error("useWallet must be used within a WalletProvider");
+    throw new Error("useWallet must be used within a WalletProvider")
   }
-  return context;
+  return context
 }
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const [isFreighterAvailable, setIsFreighterAvailable] = useState(false);
-  const [isWalletAllowed, setIsWalletAllowed] = useState(false);
+  const [isFreighterAvailable, setIsFreighterAvailable] = useState(false)
+  const [isWalletAllowed, setIsWalletAllowed] = useState(false)
 
   const checkFreighterAvailability = async () => {
-    if (typeof window === "undefined") {
-      setIsFreighterAvailable(false);
-      setIsWalletAllowed(false);
-      return;
-    }
     try {
-      const connected = await isConnected();
-      setIsFreighterAvailable(!!connected);
-      if (connected) {
+
+      // Check if we're in browser environment
+      if (typeof window === "undefined") {
+        setIsFreighterAvailable(false)
+        setIsWalletAllowed(false)
+        return
+      }
+
+      // Use the proper Freighter API to check if extension is available
+      const connected = await isConnected()
+      const freighterAvailable = !!connected
+      
+      console.log("Freighter availability check via isConnected:", freighterAvailable, connected)
+      setIsFreighterAvailable(freighterAvailable)
+
+      if (freighterAvailable) {
         try {
-          const allowed = await isAllowed();
-          setIsWalletAllowed(allowed);
-        } catch {
-          setIsWalletAllowed(false);
+          // Check if the app is allowed to connect
+          const allowed = await isAllowed()
+          console.log("Wallet allowed status:", allowed)
+          setIsWalletAllowed(allowed)
+        } catch (error) {
+          console.error("Error checking isAllowed:", error)
+          setIsWalletAllowed(false)
         }
       } else {
-        setIsWalletAllowed(false);
+        setIsWalletAllowed(false)
       }
-    } catch {
-      setIsFreighterAvailable(false);
-      setIsWalletAllowed(false);
+    } catch (error) {
+      console.error("Error checking Freighter availability:", error)
+      setIsFreighterAvailable(false)
+      setIsWalletAllowed(false)
     }
-  };
+  }
 
   useEffect(() => {
-    checkFreighterAvailability();
-    const t = setTimeout(checkFreighterAvailability, 2000);
-    return () => clearTimeout(t);
-  }, []);
+    checkFreighterAvailability()
+    
+    // Also check after a delay to catch late-loading extensions
+    const delayedCheck = setTimeout(() => {
+      checkFreighterAvailability()
+    }, 2000)
+    
+    return () => clearTimeout(delayedCheck)
+  }, [])
+
+  const value: WalletContextType = {
+    isFreighterAvailable,
+    isAllowed: isWalletAllowed,
+    checkFreighterAvailability,
+  }
 
   return (
-    <WalletContext.Provider
-      value={{
-        isFreighterAvailable,
-        isAllowed: isWalletAllowed,
-        checkFreighterAvailability,
-      }}
-    >
+    <WalletContext.Provider value={value}>
       {children}
     </WalletContext.Provider>
-  );
+  )
 }

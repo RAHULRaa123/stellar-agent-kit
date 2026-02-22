@@ -5,6 +5,8 @@ import { useAccount } from "@/hooks/use-account";
 import { Link2, ExternalLink, ArrowRight } from "lucide-react";
 import { ConnectButton } from "./connect-button";
 import { toast } from "sonner";
+import { signTransaction } from "@stellar/freighter-api";
+import { Networks } from "@stellar/stellar-sdk";
 
 const SUPPORTED_CHAINS = [
   { id: "stellar", name: "Stellar", symbol: "XLM" },
@@ -18,8 +20,8 @@ const SUPPORTED_CHAINS = [
 ];
 
 const SUPPORTED_ASSETS = [
-  { symbol: "USDT", name: "Tether USD" },
   { symbol: "USDC", name: "USD Coin" },
+  { symbol: "USDT", name: "Tether USD" },
   { symbol: "ETH", name: "Ethereum" },
   { symbol: "BTC", name: "Bitcoin" },
 ];
@@ -56,16 +58,74 @@ export function BridgeInterface() {
 
     setLoading(true);
     try {
-      // This would integrate with Allbridge Core SDK
-      toast.info(`Bridge ${amount} ${asset} from ${SUPPORTED_CHAINS.find(c => c.id === fromChain)?.name} to ${SUPPORTED_CHAINS.find(c => c.id === toChain)?.name} - Integration coming soon!`);
+      // Step 1: Build the bridge transaction
+      const buildResponse = await fetch("/api/bridge/build", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fromChain,
+          toChain,
+          asset,
+          amount,
+          fromAddress: account.address,
+          toAddress,
+        }),
+      });
+
+      const buildResult = await buildResponse.json();
+
+      if (!buildResponse.ok) {
+        throw new Error(buildResult.error || "Failed to build bridge transaction");
+      }
+
+      // Step 2: Sign with Freighter
+      const networkPassphrase = Networks.PUBLIC;
+      const signResult = await signTransaction(buildResult.xdr, { networkPassphrase });
       
-      // In a real implementation, this would use Allbridge Core SDK:
-      // const sdk = new AllbridgeCoreSdk(nodeRpcUrlsDefault);
-      // const xdrTx = await sdk.bridge.rawTxBuilder.send({...});
+      if (signResult.error) {
+        if (signResult.error.message?.toLowerCase().includes("rejected") || 
+            signResult.error.message?.toLowerCase().includes("denied")) {
+          toast.info("Bridge transaction cancelled");
+          return;
+        }
+        throw new Error(signResult.error.message || "Failed to sign transaction");
+      }
+
+      // Step 3: Submit the signed transaction
+      const submitResponse = await fetch("/api/bridge/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          signedXdr: signResult.signedTxXdr,
+        }),
+      });
+
+      const submitResult = await submitResponse.json();
+
+      if (!submitResponse.ok) {
+        throw new Error(submitResult.error || "Failed to submit transaction");
+      }
+
+      toast.success(`Successfully bridged ${amount} ${asset}!`, {
+        description: `From ${buildResult.sourceChain} to ${buildResult.destChain}. Hash: ${submitResult.hash}`,
+        action: {
+          label: "View on Stellar Expert",
+          onClick: () => window.open(`https://stellar.expert/explorer/public/tx/${submitResult.hash}`, "_blank"),
+        },
+      });
+
+      // Reset form
+      setAmount("");
+      setToAddress("");
       
     } catch (error) {
       console.error("Bridge error:", error);
-      toast.error("Failed to initiate bridge transaction");
+      const message = error instanceof Error ? error.message : "Failed to initiate bridge transaction";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

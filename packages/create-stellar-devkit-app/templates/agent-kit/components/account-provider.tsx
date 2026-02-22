@@ -19,9 +19,10 @@ interface AccountContextType {
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
-function formatDisplayName(address: string): string {
-  if (typeof address !== "string" || address.length < 8) return address || "Unknown";
-  return `${address.slice(0, 4)}...${address.slice(-4)}`;
+function formatDisplayName(address: string | undefined | null): string {
+  const s = address != null && typeof address === "string" ? address.trim() : "";
+  if (s.length < 8) return s || "Unknown";
+  return `${s.slice(0, 4)}...${s.slice(-4)}`;
 }
 
 async function checkConnection(): Promise<AccountData | null> {

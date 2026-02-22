@@ -5,6 +5,8 @@ import { useAccount } from "@/hooks/use-account";
 import { Landmark, ExternalLink } from "lucide-react";
 import { ConnectButton } from "./connect-button";
 import { toast } from "sonner";
+import { signTransaction } from "@stellar/freighter-api";
+import { Networks } from "@stellar/stellar-sdk";
 
 export function LendingInterface() {
   const { account } = useAccount();
@@ -26,16 +28,72 @@ export function LendingInterface() {
 
     setLoading(true);
     try {
-      // This would integrate with Blend protocol
-      // For now, show info about the integration
-      toast.info(`${action === "supply" ? "Supply" : "Borrow"} ${amount} ${asset} - Integration coming soon!`);
+      // Step 1: Build the transaction
+      const endpoint = action === "supply" ? "/api/lending/supply" : "/api/lending/borrow";
       
-      // In a real implementation, this would call:
-      // await agent.lendingSupply() or await agent.lendingBorrow()
+      const buildResponse = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          asset,
+          amount,
+          publicKey: account.address,
+        }),
+      });
+
+      const buildResult = await buildResponse.json();
+
+      if (!buildResponse.ok) {
+        throw new Error(buildResult.error || `Failed to build ${action} transaction`);
+      }
+
+      // Step 2: Sign with Freighter
+      const networkPassphrase = Networks.PUBLIC;
+      const signResult = await signTransaction(buildResult.xdr, { networkPassphrase });
+      
+      if (signResult.error) {
+        if (signResult.error.message?.toLowerCase().includes("rejected") || 
+            signResult.error.message?.toLowerCase().includes("denied")) {
+          toast.info(`${action === "supply" ? "Supply" : "Borrow"} cancelled`);
+          return;
+        }
+        throw new Error(signResult.error.message || "Failed to sign transaction");
+      }
+
+      // Step 3: Submit the signed transaction
+      const submitResponse = await fetch("/api/lending/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          signedXdr: signResult.signedTxXdr,
+        }),
+      });
+
+      const submitResult = await submitResponse.json();
+
+      if (!submitResponse.ok) {
+        throw new Error(submitResult.error || "Failed to submit transaction");
+      }
+
+      toast.success(`Successfully ${action === "supply" ? "supplied" : "borrowed"} ${amount} ${asset}!`, {
+        description: `Transaction hash: ${submitResult.hash}`,
+        action: {
+          label: "View on Stellar Expert",
+          onClick: () => window.open(`https://stellar.expert/explorer/public/tx/${submitResult.hash}`, "_blank"),
+        },
+      });
+
+      // Reset form
+      setAmount("");
       
     } catch (error) {
       console.error("Lending error:", error);
-      toast.error(`Failed to ${action}`);
+      const message = error instanceof Error ? error.message : `Failed to ${action}`;
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -91,7 +149,6 @@ export function LendingInterface() {
             >
               <option value="USDC">USDC</option>
               <option value="XLM">XLM</option>
-              <option value="EURC">EURC</option>
             </select>
           </div>
 

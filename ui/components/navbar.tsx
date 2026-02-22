@@ -3,11 +3,23 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { GlassSurface } from "./glass-surface"
 import { MobileMenu } from "./mobile-menu"
 import { WalletData } from "./wallet-data"
 
+const NAV_LINKS: { href: string; label: string }[] = [
+  { href: "/docs", label: "Docs" },
+  { href: "/devkit", label: "DevKit" },
+  { href: "/protocols", label: "Protocols" },
+  { href: "/swap", label: "Swap" },
+  { href: "/protocols-ui", label: "Try Protocols" },
+  { href: "/chat", label: "Chat" },
+  { href: "/pricing", label: "Pricing" },
+]
+
 export function Navbar() {
+  const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(true)
   const lastScrollYRef = useRef(0)
 
@@ -30,11 +42,6 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id)
-    if (el) el.scrollIntoView({ behavior: "smooth" })
-  }
-
   return (
     <nav
       className={`fixed left-1/2 -translate-x-1/2 z-50 px-4 w-full max-w-5xl transition-all duration-700 ease-in-out ${
@@ -49,11 +56,11 @@ export function Navbar() {
         saturation={1.2}
         forceDark
         simpleGlass
-        className="px-8 py-4 flex items-center justify-center min-w-0 w-full shadow-lg shadow-black/20"
-        contentClassName="p-0 w-full flex items-center justify-center gap-6 min-w-0"
+        className="px-6 sm:px-8 py-4 flex items-center justify-between sm:justify-center min-w-0 w-full shadow-lg shadow-black/20"
+        contentClassName="p-0 w-full flex items-center justify-between sm:justify-center gap-4 sm:gap-6 min-w-0"
       >
-        {/* Centered: Logo + Nav + Wallet */}
-        <div className="hidden sm:flex items-center justify-center gap-6 flex-wrap min-w-0">
+        {/* Centered on desktop: Logo + Nav + Wallet */}
+        <div className="hidden sm:flex items-center justify-center gap-6 flex-wrap min-w-0 flex-1">
           <Link
             href="/"
             className="flex items-center gap-2 text-lg font-bold text-white hover:text-zinc-200 transition-colors duration-300 shrink-0"
@@ -62,43 +69,23 @@ export function Navbar() {
             Orbit
           </Link>
           <span className="hidden md:block w-px h-5 bg-zinc-700 shrink-0" aria-hidden />
-          <nav className="flex items-center gap-1" aria-label="Main">
-            <Link
-              href="/docs"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 rounded-md"
-            >
-              Docs
-            </Link>
-            <Link
-              href="/devkit"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 rounded-md"
-            >
-              DevKit
-            </Link>
-            <Link
-              href="/protocols"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 rounded-md"
-            >
-              Protocols
-            </Link>
-            <Link
-              href="/swap"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 rounded-md"
-            >
-              Demo
-            </Link>
-            <Link
-              href="/chat"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 rounded-md"
-            >
-              Chat
-            </Link>
-            <Link
-              href="/pricing"
-              className="px-3 py-2 text-sm text-zinc-400 hover:text-white transition-colors duration-300 rounded-md"
-            >
-              Pricing
-            </Link>
+          <nav className="flex items-center gap-0.5" aria-label="Main">
+            {NAV_LINKS.map(({ href, label }) => {
+              const isActive = pathname === href || (href !== "/" && pathname.startsWith(href + "/"))
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`px-3 py-2 text-sm rounded-lg transition-colors duration-300 ${
+                    isActive
+                      ? "text-white font-medium"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  {label}
+                </Link>
+              )
+            })}
           </nav>
           <span className="hidden md:block w-px h-5 bg-zinc-700 shrink-0" aria-hidden />
           <div className="shrink-0">
