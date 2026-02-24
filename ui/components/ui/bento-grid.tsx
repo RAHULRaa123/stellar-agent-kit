@@ -18,6 +18,10 @@ interface BentoCardProps {
   description: string
   href: string
   cta: string
+  /** Open in new tab */
+  external?: boolean
+  /** Optional content rendered inside the card (e.g. AnimatedBeam) */
+  children?: ReactNode
 }
 
 const BentoGrid = ({ children, className, ...props }: BentoGridProps) => {
@@ -42,11 +46,14 @@ const BentoCard = ({
   description,
   href,
   cta,
+  external,
+  children,
   ...props
 }: BentoCardProps) => (
   <a
     href={href}
     key={typeof name === "string" ? name : "card"}
+    {...(external && { target: "_blank", rel: "noopener noreferrer" })}
     className={cn(
       "group relative col-span-3 flex flex-col justify-between overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 transition-all duration-300 hover:border-zinc-600 hover:bg-zinc-900/70",
       className
@@ -61,6 +68,8 @@ const BentoCard = ({
       </h3>
       <p className="max-w-md text-sm text-neutral-400 leading-snug">{description}</p>
     </div>
+
+    {children}
 
     <div className="pointer-events-none absolute bottom-0 flex w-full translate-y-8 transform-gpu flex-row items-center p-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
       <button className="pointer-events-auto rounded-md bg-neutral-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800">

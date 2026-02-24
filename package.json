@@ -9,7 +9,8 @@
     "packages/create-stellar-devkit-app",
     "packages/stellar-devkit-mcp",
     "sdk-fe",
-    "ui"
+    "ui",
+    "onboarding"
   ],
   "scripts": {
     "build": "npm run build:root && npm run build --workspaces --if-present",
@@ -22,6 +23,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "dev:sdk-fe": "npm run dev -w sdk-fe --if-present",
     "dev:ui": "npm run dev -w ui",
+    "dev:onboarding": "npm run dev -w orbit-onboarding",
     "version:packages": "npm version patch -w stellar-agent-kit && npm version patch -w x402-stellar-sdk && npm version patch -w create-stellar-devkit-app && npm version patch -w stellar-devkit-mcp",
     "publish:packages": "npm run build:agent-kit && npm run build:x402 && npm run build:create-app && npm run build:mcp && npm publish -w stellar-agent-kit && npm publish -w x402-stellar-sdk && npm publish -w create-stellar-devkit-app && npm publish -w stellar-devkit-mcp"
   },

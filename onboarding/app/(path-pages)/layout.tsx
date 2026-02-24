@@ -1,0 +1,12 @@
+import { OnboardingHeader } from "@/components/onboarding-header"
+
+export default function PathPagesLayout({
+  children,
+}: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <OnboardingHeader />
+      {children}
+    </div>
+  )
+}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireActivePlan } from '@/lib/require-active-plan'
 import { SoroSwapClient } from '@/lib/agent-kit/defi/soroSwapClient'
 import { getNetworkConfig } from '@/lib/agent-kit/config/networks'
 
@@ -8,6 +9,8 @@ function normalizeNetwork(name: string): "testnet" | "mainnet" {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = requireActivePlan(request)
+  if (auth instanceof NextResponse) return auth
   try {
     const { signedXdr, network } = await request.json()
 

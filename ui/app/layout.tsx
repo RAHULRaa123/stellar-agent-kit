@@ -6,6 +6,7 @@ import { LenisProvider } from "@/components/lenis-provider"
 import { WalletProvider } from "@/components/wallet-provider"
 import { AccountProvider } from "@/components/account-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { NetworkProfileProvider } from "@/contexts/network-profile-context"
 import "./globals.css"
 
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
@@ -31,8 +32,10 @@ export default function RootLayout({
       <body className={`${geistMono.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <WalletProvider>
           <AccountProvider>
-            <LenisProvider>{children}</LenisProvider>
-            <Toaster />
+            <NetworkProfileProvider>
+              <LenisProvider>{children}</LenisProvider>
+              <Toaster />
+            </NetworkProfileProvider>
           </AccountProvider>
         </WalletProvider>
         <Analytics />

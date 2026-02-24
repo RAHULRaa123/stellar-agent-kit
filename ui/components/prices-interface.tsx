@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { sdkApiHeaders } from "@/lib/get-devkit-app-id"
 
 const SYMBOLS = ["XLM", "USDC", "BTC"] as const
 
@@ -18,7 +19,7 @@ export function PricesInterface() {
 
     Promise.all(
       SYMBOLS.map(async (symbol) => {
-        const res = await fetch(`/api/price?symbol=${symbol}`)
+        const res = await fetch(`/api/price?symbol=${symbol}`, { headers: sdkApiHeaders() })
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
           throw new Error(data?.error || `Failed to get ${symbol} price`)

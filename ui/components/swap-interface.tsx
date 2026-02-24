@@ -10,7 +10,10 @@ import { Networks } from "@stellar/stellar-sdk"
 import { useAccount } from "@/hooks/use-account"
 import { useSoroSwap } from "@/hooks/use-soroswap"
 import { useBalance } from "@/hooks/use-balance"
+import { useNetworkProfile } from "@/contexts/network-profile-context"
 import { ConnectButton } from "./connect-button"
+import { NetworkMismatchDialog } from "./network-mismatch-dialog"
+import { isNetworkMismatch } from "@/lib/network-validation"
 import { toast } from "sonner"
 import {
   DropdownMenu,
@@ -19,8 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-/** Mainnet only. */
-const ASSETS = {
+/** Mainnet asset contract IDs (SoroSwap). */
+const MAINNET_ASSETS = {
   XLM: {
     symbol: "XLM",
     name: "Stellar Lumens",
@@ -35,6 +38,24 @@ const ASSETS = {
   },
 } as const
 
+/** Testnet wrapped XLM and common test tokens (Soroban testnet). */
+const TESTNET_ASSETS = {
+  XLM: {
+    symbol: "XLM",
+    name: "Stellar Lumens (testnet)",
+    contractId: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    decimals: 7,
+  },
+  USDC: {
+    symbol: "USDC",
+    name: "USD Coin (testnet)",
+    contractId: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    decimals: 7,
+  },
+} as const
+
+const ASSETS_BY_NETWORK = { mainnet: MAINNET_ASSETS, testnet: TESTNET_ASSETS } as const
+
 type Asset = {
   symbol: string
   name: string
@@ -43,16 +64,31 @@ type Asset = {
 }
 
 export function SwapInterface() {
-  const { account } = useAccount()
+  const { account, disconnect } = useAccount()
+  const { network: profileNetwork, setNetwork } = useNetworkProfile()
   const { getQuote, buildSwap, submitSwap, isLoading: soroSwapLoading } = useSoroSwap()
   const { getBalance, refetch: refetchBalances, isLoading: balanceLoading } = useBalance()
-  const [fromAsset, setFromAsset] = useState<Asset>(ASSETS.XLM as Asset)
-  const [toAsset, setToAsset] = useState<Asset>(ASSETS.USDC as Asset)
+  const assets = ASSETS_BY_NETWORK[profileNetwork]
+  const [fromAsset, setFromAsset] = useState<Asset>(assets.XLM as Asset)
+  const [toAsset, setToAsset] = useState<Asset>(assets.USDC as Asset)
   const [fromAmount, setFromAmount] = useState("")
   const [toAmount, setToAmount] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [quote, setQuote] = useState<any>(null)
   const [slippage, setSlippage] = useState("0.5")
+  const [showNetworkMismatch, setShowNetworkMismatch] = useState(false)
+
+  // Check for network mismatch
+  const hasNetworkMismatch = account && isNetworkMismatch(account.network, profileNetwork)
+
+  // When network profile changes, switch to that network's assets
+  useEffect(() => {
+    setFromAsset(assets.XLM as Asset)
+    setToAsset(assets.USDC as Asset)
+    setQuote(null)
+    setFromAmount("")
+    setToAmount("")
+  }, [profileNetwork])
 
 
   // Swap the from/to assets
@@ -84,7 +120,7 @@ export function SwapInterface() {
         const fromAssetData = { contractId: fromAsset.contractId }
         const toAssetData = { contractId: toAsset.contractId }
         
-        const quoteResult = await getQuote(fromAssetData, toAssetData, rawAmount, "mainnet")
+        const quoteResult = await getQuote(fromAssetData, toAssetData, rawAmount, profileNetwork)
         
         // Convert back from raw units to display units
         const expectedOutDisplay = (parseFloat(quoteResult.expectedOut) / Math.pow(10, toAsset.decimals)).toFixed(6)
@@ -111,20 +147,26 @@ export function SwapInterface() {
 
     const debounce = setTimeout(fetchQuote, 800)
     return () => clearTimeout(debounce)
-  }, [fromAmount, fromAsset, toAsset, slippage, account])
+  }, [fromAmount, fromAsset, toAsset, slippage, account, profileNetwork])
 
   const handleSwap = async () => {
     if (!account || !quote || !fromAmount) return
 
+    // Check for network mismatch before proceeding
+    if (hasNetworkMismatch) {
+      setShowNetworkMismatch(true)
+      return
+    }
+
     try {
       setIsLoading(true)
-      const network = "mainnet"
+      const network = profileNetwork
 
       // 1) Build unsigned transaction (server)
       const { xdr } = await buildSwap(quote, account.publicKey, network)
 
       // 2) Sign with Freighter – user approves in the wallet popup
-      const networkPassphrase = Networks.PUBLIC
+      const networkPassphrase = network === "testnet" ? Networks.TESTNET : Networks.PUBLIC
       const signResult = await signTransaction(xdr, { networkPassphrase })
       if (signResult.error) {
         if (signResult.error.message?.toLowerCase().includes("rejected") || signResult.error.message?.toLowerCase().includes("denied")) {
@@ -228,7 +270,7 @@ export function SwapInterface() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-zinc-950 border-zinc-800">
-                  {Object.values(ASSETS).map((asset) => (
+                  {Object.values(assets).map((asset) => (
                     <DropdownMenuItem
                       key={asset.symbol}
                       onClick={() => setFromAsset(asset)}
@@ -277,7 +319,7 @@ export function SwapInterface() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-zinc-950 border-zinc-800">
-                  {Object.values(ASSETS).map((asset) => (
+                  {Object.values(assets).map((asset) => (
                     <DropdownMenuItem
                       key={asset.symbol}
                       onClick={() => setToAsset(asset)}
@@ -345,6 +387,26 @@ export function SwapInterface() {
           </p>
         </div>
       </div>
+
+      {/* Network Mismatch Dialog */}
+      {account && (
+        <NetworkMismatchDialog
+          open={showNetworkMismatch}
+          onOpenChange={setShowNetworkMismatch}
+          walletNetwork={account.network}
+          appNetwork={profileNetwork}
+          onSwitchApp={() => {
+            setNetwork(account.network as "mainnet" | "testnet")
+            setShowNetworkMismatch(false)
+            toast.success(`Switched app to ${account.network}`)
+          }}
+          onDisconnect={() => {
+            disconnect()
+            setShowNetworkMismatch(false)
+            toast.success("Wallet disconnected")
+          }}
+        />
+      )}
     </div>
   )
 }

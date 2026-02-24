@@ -98,6 +98,37 @@ export default function PricingPage() {
   }
 
   const showSuccess = searchParams.get("success") === "1"
+  const [linkAppId, setLinkAppId] = useState("")
+  const [linkLoading, setLinkLoading] = useState(false)
+  const [linkDone, setLinkDone] = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
+
+  const handleLinkPlan = async () => {
+    const paymentId = typeof window !== "undefined" ? window.localStorage.getItem("stellar_devkit_plan_order") : null
+    if (!paymentId || !linkAppId.trim()) {
+      setLinkError("Enter your DevKit App ID. Create a project in DevKit first if you don't have one.")
+      return
+    }
+    setLinkError(null)
+    setLinkLoading(true)
+    try {
+      const res = await fetch("/api/v1/link-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appId: linkAppId.trim(), paymentId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setLinkError(data.error || "Link failed")
+        return
+      }
+      setLinkDone(true)
+    } catch (e) {
+      setLinkError(e instanceof Error ? e.message : "Link failed")
+    } finally {
+      setLinkLoading(false)
+    }
+  }
 
   return (
     <main className="relative min-h-screen bg-black text-white">
@@ -109,8 +140,28 @@ export default function PricingPage() {
             Choose the plan that fits your build. Upgrade anytime to unlock Pro templates and support.
           </p>
           {showSuccess && (
-            <div className="mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm text-center">
-              Payment successful. Your plan is now active.
+            <div className="mb-6 p-6 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-4">
+              <p className="text-emerald-400 text-sm text-center font-medium">Payment successful. Your plan is now active.</p>
+              {!linkDone ? (
+                <div className="max-w-md mx-auto space-y-2">
+                  <p className="text-zinc-400 text-xs text-center">Link your DevKit App ID to unlock SDK access (Swap, Lending, Price, Send, Balance APIs).</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={linkAppId}
+                      onChange={(e) => setLinkAppId(e.target.value)}
+                      placeholder="Your App ID from DevKit"
+                      className="flex-1 rounded-lg border border-zinc-600 bg-zinc-900 px-4 py-2 text-sm text-white placeholder:text-zinc-500"
+                    />
+                    <Button onClick={handleLinkPlan} disabled={linkLoading} className="shrink-0 rounded-lg">
+                      {linkLoading ? "Linking…" : "Link plan"}
+                    </Button>
+                  </div>
+                  {linkError && <p className="text-red-400 text-xs text-center">{linkError}</p>}
+                </div>
+              ) : (
+                <p className="text-emerald-400 text-sm text-center">App ID linked. You can use the SDK with this key in the <code className="rounded bg-zinc-800 px-1">x-app-id</code> header or in your env.</p>
+              )}
             </div>
           )}
           {error && (

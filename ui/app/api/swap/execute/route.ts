@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireActivePlan } from '@/lib/require-active-plan'
 import { SoroSwapClient } from '@/lib/agent-kit/defi/soroSwapClient'
 import { getNetworkConfig } from '@/lib/agent-kit/config/networks'
 
 export async function POST(request: NextRequest) {
+  const auth = requireActivePlan(request)
+  if (auth instanceof NextResponse) return auth
   try {
     const { quote, network, secretKey } = await request.json()
     const networkName = (network?.toLowerCase?.()?.trim() === "testnet" ? "testnet" : "mainnet") as "testnet" | "mainnet"

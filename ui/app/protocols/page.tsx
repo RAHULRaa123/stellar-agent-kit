@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { ProtocolInterfacesSection } from "@/components/protocol-interfaces-section"
 import { ExternalLink, Copy, Check, ChevronDown, ChevronUp, Code2, ArrowLeftRight, Landmark, LineChart, Layers, Link2, Vote } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { PageTransition } from "@/components/page-transition"
@@ -417,7 +418,23 @@ function CodeGeneratorTab() {
 }
 
 export default function ProtocolsPage() {
-  const [tab, setTab] = useState<"explorer" | "code">("explorer")
+  const [tab, setTab] = useState<"explorer" | "code" | "try">("explorer")
+
+  // Open "Try protocols" tab when landing with hash #try (e.g. /protocols#try or "My Protocols" link)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (window.location.hash === "#try") setTab("try")
+  }, [])
+
+  // Keep hash in sync when switching to/from Try protocols tab
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (tab === "try") {
+      window.history.replaceState(null, "", "/protocols#try")
+    } else if (window.location.hash === "#try") {
+      window.history.replaceState(null, "", "/protocols")
+    }
+  }, [tab])
 
   return (
     <main className="relative min-h-screen bg-black text-white overflow-hidden">
@@ -457,6 +474,17 @@ export default function ProtocolsPage() {
               >
                 Code Generator
               </button>
+              <button
+                type="button"
+                onClick={() => setTab("try")}
+                className={`rounded-full px-6 py-3 text-sm font-medium transition-all ${
+                  tab === "try"
+                    ? "bg-zinc-800/50 border border-zinc-600 text-white"
+                    : "border border-zinc-700 text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
+                }`}
+              >
+                Try protocols
+              </button>
             </div>
 
             {tab === "explorer" && (
@@ -474,6 +502,15 @@ export default function ProtocolsPage() {
                   <h2 className="text-lg font-semibold text-white">Code Generator</h2>
                 </div>
                 <CodeGeneratorTab />
+              </div>
+            )}
+
+            {tab === "try" && (
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/50 p-6 md:p-8">
+                <p className="text-zinc-400 mb-6">
+                  Interact with integrated Stellar protocols in-app. Swap, lend, bridge, and more.
+                </p>
+                <ProtocolInterfacesSection />
               </div>
             )}
           </div>

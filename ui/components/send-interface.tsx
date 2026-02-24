@@ -8,6 +8,10 @@ import { GlowingEffect } from "@/components/ui/glowing-effect"
 import { signTransaction } from "@stellar/freighter-api"
 import { Networks } from "@stellar/stellar-sdk"
 import { useAccount } from "@/hooks/use-account"
+import { useNetworkProfile } from "@/contexts/network-profile-context"
+import { NetworkMismatchDialog } from "./network-mismatch-dialog"
+import { isNetworkMismatch } from "@/lib/network-validation"
+import { sdkApiHeaders } from "@/lib/get-devkit-app-id"
 import { ConnectButton } from "./connect-button"
 import { toast } from "sonner"
 import {
@@ -27,22 +31,28 @@ const ASSETS = [
 const USDC_ISSUER_MAINNET = "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
 
 export function SendInterface() {
-  const { account } = useAccount()
+  const { account, disconnect } = useAccount()
+  const { network: profileNetwork, setNetwork } = useNetworkProfile()
   const [toAddress, setToAddress] = useState("")
   const [amount, setAmount] = useState("")
   const [asset, setAsset] = useState<{ symbol: string; name: string }>(ASSETS[0])
   const [isLoading, setIsLoading] = useState(false)
+  const [showNetworkMismatch, setShowNetworkMismatch] = useState(false)
+
+  // Check for network mismatch
+  const hasNetworkMismatch = account && isNetworkMismatch(account.network, profileNetwork)
 
   const buildPayment = async (): Promise<{ xdr: string }> => {
     const res = await fetch("/api/send/build", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: sdkApiHeaders(),
       body: JSON.stringify({
         fromAddress: account!.publicKey,
         to: toAddress.trim(),
         amount: amount.trim(),
         assetCode: asset.symbol === "XLM" ? undefined : asset.symbol,
         assetIssuer: asset.symbol === "USDC" ? USDC_ISSUER_MAINNET : undefined,
+        network: profileNetwork,
       }),
     })
     if (!res.ok) {
@@ -55,8 +65,8 @@ export function SendInterface() {
   const submitPayment = async (signedXdr: string): Promise<{ hash: string }> => {
     const res = await fetch("/api/send/submit", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ signedXdr }),
+      headers: sdkApiHeaders(),
+      body: JSON.stringify({ signedXdr, network: profileNetwork }),
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
@@ -69,10 +79,16 @@ export function SendInterface() {
   const handleSend = async () => {
     if (!account || !toAddress.trim() || !amount || parseFloat(amount) <= 0) return
 
+    // Check for network mismatch before proceeding
+    if (hasNetworkMismatch) {
+      setShowNetworkMismatch(true)
+      return
+    }
+
     try {
       setIsLoading(true)
       const { xdr } = await buildPayment()
-      const networkPassphrase = Networks.PUBLIC
+      const networkPassphrase = profileNetwork === "testnet" ? Networks.TESTNET : Networks.PUBLIC
       const signResult = await signTransaction(xdr, { networkPassphrase })
       if (signResult.error) {
         if (signResult.error.message?.toLowerCase().includes("rejected")) {
@@ -166,6 +182,26 @@ export function SendInterface() {
           fullWidth
         />
       </div>
+
+      {/* Network Mismatch Dialog */}
+      {account && (
+        <NetworkMismatchDialog
+          open={showNetworkMismatch}
+          onOpenChange={setShowNetworkMismatch}
+          walletNetwork={account.network}
+          appNetwork={profileNetwork}
+          onSwitchApp={() => {
+            setNetwork(account.network as "mainnet" | "testnet")
+            setShowNetworkMismatch(false)
+            toast.success(`Switched app to ${account.network}`)
+          }}
+          onDisconnect={() => {
+            disconnect()
+            setShowNetworkMismatch(false)
+            toast.success("Wallet disconnected")
+          }}
+        />
+      )}
     </div>
   )
 }

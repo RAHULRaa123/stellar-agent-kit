@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireActivePlan } from '@/lib/require-active-plan'
 import { SoroSwapClient } from '@/lib/agent-kit/defi/soroSwapClient'
 import { getNetworkConfig } from '@/lib/agent-kit/config/networks'
 
 export async function POST(request: NextRequest) {
+  const auth = requireActivePlan(request)
+  if (auth instanceof NextResponse) return auth
   try {
-    const { fromAsset, toAsset, amount } = await request.json()
+    const { fromAsset, toAsset, amount, network = "mainnet" } = await request.json()
 
     if (!fromAsset || !toAsset || !amount) {
       return NextResponse.json(
@@ -13,7 +16,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const networkConfig = getNetworkConfig()
+    const networkKey = (network === "testnet" ? "testnet" : "mainnet") as "mainnet" | "testnet"
+    const networkConfig = getNetworkConfig(networkKey)
     const apiKey = process.env.SOROSWAP_API_KEY
 
     const soroSwapClient = new SoroSwapClient(networkConfig, apiKey)

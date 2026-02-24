@@ -4,8 +4,8 @@ export const mainnet = {
 } as const;
 
 export const testnet = {
-  horizonUrl: "https://horizon.stellarnetwork.io",
-  sorobanRpcUrl: "https://soroban-rpc.stellarnetwork.io",
+  horizonUrl: "https://horizon-testnet.stellar.org",
+  sorobanRpcUrl: "https://soroban-testnet.stellar.org",
 } as const;
 
 export type NetworkConfig = typeof mainnet;

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireActivePlan } from '@/lib/require-active-plan'
 import { StellarClient } from '@/lib/agent-kit/core/stellarClient'
 import { getNetworkConfig } from '@/lib/agent-kit/config/networks'
 
 export async function POST(request: NextRequest) {
+  const auth = requireActivePlan(request)
+  if (auth instanceof NextResponse) return auth
   try {
-    const { publicKey, network = 'testnet' } = await request.json()
+    const { publicKey, network = 'mainnet' } = await request.json()
 
     if (!publicKey) {
       return NextResponse.json(

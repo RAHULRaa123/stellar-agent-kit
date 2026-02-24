@@ -64,3 +64,12 @@ Used to verify `payment.succeeded` webhooks and activate plans even if the user 
 | `DODO_PAYMENTS_WEBHOOK_SECRET` | No | Webhook signing secret for `/api/dodo/webhook`. |
 
 After setting these, the Pricing page will create Dodo checkouts and verify payments; with the webhook configured, plans are also activated when Dodo sends `payment.succeeded`.
+
+## 6. SDK access (plan bound to API key)
+
+SDK API routes (swap, lending, price, send, balance) only work for **registered App IDs that have an active plan**. After payment:
+
+1. Create a project in **DevKit** to get your **App ID**.
+2. On the **Pricing** success page, enter that App ID and click **Link plan**. This binds your payment to the App ID.
+3. Use the same App ID in requests: send header **`x-app-id: <your-app-id>`** (or `Authorization: Bearer <your-app-id>`) when calling the SDK APIs. In your own app you can put the App ID in env as `STELLAR_DEVKIT_APP_ID` and pass it in the header.
+4. Validate endpoint: `GET /api/v1/validate?appId=<your-app-id>` returns `valid: true` only when the App ID is registered and has a linked Builder or Pro plan.

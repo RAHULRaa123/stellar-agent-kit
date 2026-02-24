@@ -8,6 +8,7 @@ import {
 } from "@stellar/stellar-sdk"
 import { PoolContractV2, RequestType, type Request } from "@blend-capital/blend-sdk"
 import { getNetworkConfig } from "stellar-agent-kit"
+import { requireActivePlan } from "@/lib/require-active-plan"
 
 /** Default active pool (FixedV2). Frozen pool: YieldBloxV2 = CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS */
 const DEFAULT_POOL_ID = "CAJJZSGMMM3PD7N33TAPHGBUGTB43OC73HVIK2L2G6BNGGGYOSSYBXBD"
@@ -23,12 +24,22 @@ function toSmallestUnits(amount: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = requireActivePlan(request)
+  if (auth instanceof NextResponse) return auth
   try {
     const { publicKey, asset, amount, network = "mainnet", poolId } = await request.json()
 
     if (!publicKey || !asset || !amount) {
       return NextResponse.json(
         { error: "Missing required fields: publicKey, asset, amount" },
+        { status: 400 }
+      )
+    }
+
+    // Blend Protocol is mainnet-only
+    if (network === "testnet") {
+      return NextResponse.json(
+        { error: "Blend Protocol lending is only available on mainnet. Please switch to mainnet to use lending features." },
         { status: 400 }
       )
     }

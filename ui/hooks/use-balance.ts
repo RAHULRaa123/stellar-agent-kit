@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useAccount } from "./use-account"
-import { normalizeNetwork } from "@/lib/network"
+import { useNetworkProfile } from "@/contexts/network-profile-context"
+import { sdkApiHeaders } from "@/lib/get-devkit-app-id"
 
 interface BalanceEntry {
   code: string
@@ -12,6 +13,7 @@ interface BalanceEntry {
 
 export function useBalance() {
   const { account } = useAccount()
+  const { network: profileNetwork } = useNetworkProfile()
   const [balances, setBalances] = useState<BalanceEntry[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,12 +30,10 @@ export function useBalance() {
 
       const response = await fetch('/api/balance', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: sdkApiHeaders(),
         body: JSON.stringify({
           publicKey: account.publicKey,
-          network: normalizeNetwork(account.network)
+          network: profileNetwork
         })
       })
 
@@ -68,7 +68,7 @@ export function useBalance() {
 
   useEffect(() => {
     fetchBalances()
-  }, [account?.publicKey])
+  }, [account?.publicKey, profileNetwork])
 
   const getBalance = (assetCode: string, issuer?: string | null): string => {
     const balance = balances.find(b => 

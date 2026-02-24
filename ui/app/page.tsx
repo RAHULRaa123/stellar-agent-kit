@@ -6,10 +6,14 @@ import { CircleArrowRight, Code2, Wallet, Zap, Bot, Github, Scale, ArrowLeftRigh
 import { LiquidMetalButton } from "@/components/ui/liquid-metal-button"
 import { Navbar } from "@/components/navbar"
 import { PageTransition } from "@/components/page-transition"
+import { Footer } from "@/components/footer"
 import { ProtocolsIntegratedSection } from "@/components/protocols-integrated"
+import { CommunityProjectsSection } from "@/components/community-projects-section"
+import { TrustedByMarquee } from "@/components/trusted-by-marquee"
 import { ScrambleText } from "@/components/scramble-text"
 import { BentoCard, BentoGrid } from "@/components/ui/bento-grid"
 import { DotPattern } from "@/components/dot-pattern"
+import { DevKitAnimatedBeam } from "@/components/devkit-animated-beam"
 
 export default function Home() {
   const scrollToCapabilities = () => {
@@ -65,12 +69,13 @@ export default function Home() {
               <CircleArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:rotate-90" />
             </button>
             <LiquidMetalButton href="/docs" label="Docs" width={80} />
-            <LiquidMetalButton href="/swap" label="Try Swap" width={110} />
-            <LiquidMetalButton href="https://www.npmjs.com/~milan4606" label="npm" width={70} target="_blank" rel="noopener noreferrer" />
           </div>
         </div>
         </div>
       </div>
+
+      {/* Trusted by — marquee of partner logos */}
+      <TrustedByMarquee />
 
       {/* SDK Features — four pillars */}
       <section id="capabilities" className="relative z-20 py-20 scroll-mt-24">
@@ -93,7 +98,9 @@ export default function Home() {
               cta="Learn more"
               background={<img className="absolute -top-20 -right-20 opacity-60" />}
               className="lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3"
-            />
+            >
+              <DevKitAnimatedBeam />
+            </BentoCard>
             <BentoCard
               Icon={Code2}
               name="Stellar Agent Kit"
@@ -134,6 +141,9 @@ export default function Home() {
 
           {/* Protocols Integrated — 5 protocols from the kit */}
           <ProtocolsIntegratedSection />
+
+          {/* Supported Community Projects */}
+          <CommunityProjectsSection />
 
           {/* Try it yourself — code snippet + CTA (dot pattern background, full width) */}
         </div>
@@ -182,7 +192,7 @@ export default function Home() {
                   </table>
                 </div>
               </div>
-              <div className="flex flex-col items-start justify-center lg:pl-4">
+              <div className="flex flex-col items-start justify-center lg:px-4">
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white uppercase mb-6" style={{ fontFamily: "var(--font-space-grotesk)" }}>
                   <ScrambleText text="TRY IT OUT FOR YOURSELF" as="span" />
                 </h2>
@@ -192,7 +202,8 @@ export default function Home() {
                 <LiquidMetalButton
                   href="/docs#quick-start"
                   label="Take me to the code >>"
-                  width={220}
+                  width={280}
+                  noGradient
                 />
               </div>
             </div>
@@ -332,6 +343,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Footer />
       </PageTransition>
     </main>
   )

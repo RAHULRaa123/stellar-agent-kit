@@ -3,16 +3,22 @@
 import React, { useState } from "react"
 import { useAccount } from "@/hooks/use-account"
 import { useIsMounted } from "@/hooks/use-is-mounted"
+import { useNetworkProfile } from "@/contexts/network-profile-context"
 import { ConnectButton } from "./connect-button"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Copy, ExternalLink, LogOut } from "lucide-react"
+import { Copy, ExternalLink, LogOut, AlertTriangle } from "lucide-react"
+import { isNetworkMismatch, getNetworkDisplayName } from "@/lib/network-validation"
 import { toast } from "sonner"
 
 export function WalletData() {
   const mounted = useIsMounted()
   const { account, disconnect } = useAccount()
+  const { network: profileNetwork } = useNetworkProfile()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  // Check for network mismatch
+  const hasNetworkMismatch = account && isNetworkMismatch(account.network, profileNetwork)
 
   const copyAddress = async () => {
     if (account?.publicKey) {
@@ -63,9 +69,16 @@ export function WalletData() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="shrink-0 rounded-full border-zinc-600 bg-transparent text-white hover:bg-zinc-800 hover:border-zinc-500 min-w-[200px]"
+          className={`shrink-0 rounded-full bg-transparent text-white hover:bg-zinc-800 min-w-[140px] max-w-[200px] px-4 truncate ${
+            hasNetworkMismatch 
+              ? "border-orange-500 hover:border-orange-400" 
+              : "border-zinc-600 hover:border-zinc-500"
+          }`}
         >
-          {connectedLabel}
+          <div className="flex items-center gap-2">
+            {hasNetworkMismatch && <AlertTriangle className="h-4 w-4 text-orange-500" />}
+            <span className="truncate">{connectedLabel}</span>
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
@@ -97,6 +110,12 @@ export function WalletData() {
           >
             Network: {account.network}
           </span>
+          {hasNetworkMismatch && (
+            <div className="mt-1 text-xs text-orange-400 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              App on {getNetworkDisplayName(profileNetwork)}
+            </div>
+          )}
         </div>
         <DropdownMenuItem 
           onClick={copyAddress} 

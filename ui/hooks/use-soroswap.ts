@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { sdkApiHeaders } from "@/lib/get-devkit-app-id"
 
 // Types matching the SoroSwapClient
 interface Asset {
@@ -31,9 +32,7 @@ export function useSoroSwap() {
     try {
       const response = await fetch('/api/swap/quote', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: sdkApiHeaders(),
         body: JSON.stringify({
           fromAsset,
           toAsset,
@@ -63,7 +62,7 @@ export function useSoroSwap() {
     try {
       const response = await fetch('/api/swap/build', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: sdkApiHeaders(),
         body: JSON.stringify({ quote, fromAddress, network })
       })
       if (!response.ok) {
@@ -85,7 +84,7 @@ export function useSoroSwap() {
     try {
       const response = await fetch('/api/swap/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: sdkApiHeaders(),
         body: JSON.stringify({ signedXdr, network })
       })
       if (!response.ok) {

@@ -218,13 +218,15 @@ export function GlassSurface({
           boxShadow: `inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 0 rgba(255, 255, 255, 0.1)`,
         }
       }
+      const glassBlur = Math.max(blur, 12)
+      const glassAlpha = backgroundOpacity > 0 ? backgroundOpacity : 0.12
       return {
         ...baseStyles,
-        background: "rgba(255, 255, 255, 0.1)",
-        backdropFilter: "blur(12px) saturate(1.8) brightness(1.2)",
-        WebkitBackdropFilter: "blur(12px) saturate(1.8) brightness(1.2)",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        boxShadow: `inset 0 1px 0 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 0 rgba(255, 255, 255, 0.1)`,
+        background: `rgba(255, 255, 255, ${glassAlpha})`,
+        backdropFilter: `blur(${glassBlur}px) saturate(${saturation}) brightness(1.15)`,
+        WebkitBackdropFilter: `blur(${glassBlur}px) saturate(${saturation}) brightness(1.15)`,
+        border: "1px solid rgba(255, 255, 255, 0.18)",
+        boxShadow: `inset 0 1px 0 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 0 rgba(255, 255, 255, 0.08)`,
       }
     }
 

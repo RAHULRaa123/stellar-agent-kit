@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
+import { requireActivePlan } from "@/lib/require-active-plan"
 import { createReflectorOracle, getNetworkConfig } from "stellar-agent-kit"
 
 /**
  * GET /api/price?symbol=XLM or /api/price?contractId=C...
  * Returns Reflector (SEP-40) oracle price for the asset.
+ * Requires x-app-id or Authorization: Bearer <appId> and an active plan.
  */
 export async function GET(request: NextRequest) {
+  const auth = requireActivePlan(request)
+  if (auth instanceof NextResponse) return auth
   try {
     const { searchParams } = new URL(request.url)
     const symbol = searchParams.get("symbol")?.trim().toUpperCase()
     const contractId = searchParams.get("contractId")?.trim()
+    const network = searchParams.get("network")?.trim()
 
     if (!symbol && !contractId) {
       return NextResponse.json(
@@ -18,7 +23,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const config = getNetworkConfig()
+    const config = getNetworkConfig(network)
     const oracle = createReflectorOracle({ networkConfig: config })
     const asset = contractId
       ? { contractId }

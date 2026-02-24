@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { TransactionBuilder } from "@stellar/stellar-sdk"
 import { rpc } from "@stellar/stellar-sdk"
 import { getNetworkConfig } from "stellar-agent-kit"
+import { requireActivePlan } from "@/lib/require-active-plan"
 
 const NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015"
 
@@ -31,12 +32,22 @@ function friendlyBlendError(errorResult: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = requireActivePlan(request)
+  if (auth instanceof NextResponse) return auth
   try {
     const { signedXdr, network = "mainnet" } = await request.json()
 
     if (!signedXdr) {
       return NextResponse.json(
         { error: "Missing signed XDR" },
+        { status: 400 }
+      )
+    }
+
+    // Blend Protocol is mainnet-only
+    if (network === "testnet") {
+      return NextResponse.json(
+        { error: "Blend Protocol lending is only available on mainnet. Please switch to mainnet to use lending features." },
         { status: 400 }
       )
     }

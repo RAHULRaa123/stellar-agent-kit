@@ -18,6 +18,8 @@ interface LiquidMetalButtonProps {
   fullWidth?: boolean
   target?: string
   rel?: string
+  /** When true, no shader/gradient border — simple solid border only */
+  noGradient?: boolean
 }
 
 export function LiquidMetalButton({
@@ -33,6 +35,7 @@ export function LiquidMetalButton({
   fullWidth = false,
   target,
   rel,
+  noGradient = false,
 }: LiquidMetalButtonProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isPressed, setIsPressed] = useState(false)
@@ -77,6 +80,8 @@ export function LiquidMetalButton({
   const toPx = (v: number | string) => (typeof v === "number" ? `${v}px` : v)
 
   useEffect(() => {
+    if (noGradient) return
+
     const styleId = "shader-canvas-style-exploded"
     if (!document.getElementById(styleId)) {
       const style = document.createElement("style")
@@ -127,8 +132,8 @@ export function LiquidMetalButton({
               u_angle: 45,
               u_scale: 8,
               u_shape: 1,
-              u_offsetX: 0.1,
-              u_offsetY: -0.1,
+              u_offsetX: 0,
+              u_offsetY: 0,
             },
             undefined,
             0.6,
@@ -147,7 +152,7 @@ export function LiquidMetalButton({
         shaderMount.current = null
       }
     }
-  }, [dimensions.width, dimensions.height])
+  }, [dimensions.width, dimensions.height, noGradient])
 
   const handleMouseEnter = () => {
     if (disabled) return
@@ -317,7 +322,7 @@ export function LiquidMetalButton({
             />
           </div>
 
-          {/* Shader layer — flowing border (full size; inner fill above masks center) */}
+          {/* Border layer — shader gradient or simple solid border */}
           <div
             style={{
               position: "absolute",
@@ -331,35 +336,49 @@ export function LiquidMetalButton({
               zIndex: 10,
             }}
           >
-            <div
-              style={{
-                height: `${dimensions.height}px`,
-                width: toPx(dimensions.width),
-                borderRadius: "100px",
-                boxShadow: isPressed
-                  ? "0px 0px 0px 1px rgba(0, 0, 0, 0.5), 0px 1px 2px 0px rgba(0, 0, 0, 0.3)"
-                  : isHovered
-                    ? "0px 0px 0px 1px rgba(0, 0, 0, 0.4), 0px 12px 6px 0px rgba(0, 0, 0, 0.05), 0px 8px 5px 0px rgba(0, 0, 0, 0.1), 0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.2)"
-                    : "0px 0px 0px 1px rgba(0, 0, 0, 0.3), 0px 36px 14px 0px rgba(0, 0, 0, 0.02), 0px 20px 12px 0px rgba(0, 0, 0, 0.08), 0px 9px 9px 0px rgba(0, 0, 0, 0.12), 0px 2px 5px 0px rgba(0, 0, 0, 0.15)",
-                transition:
-                  "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease, box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
-                background: "rgb(0 0 0 / 0)",
-              }}
-            >
+            {noGradient ? (
               <div
-                ref={shaderRef}
-                className="shader-container-exploded"
                 style={{
+                  height: `${dimensions.height}px`,
+                  width: toPx(dimensions.width),
                   borderRadius: "100px",
-                  overflow: "hidden",
-                  position: "relative",
-                  width: toPx(dimensions.shaderWidth),
-                  maxWidth: toPx(dimensions.shaderWidth),
-                  height: `${dimensions.shaderHeight}px`,
-                  transition: "width 0.4s ease, height 0.4s ease",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  background: "transparent",
+                  transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                  boxShadow: isPressed ? "0 1px 2px rgba(0,0,0,0.2)" : "none",
                 }}
               />
-            </div>
+            ) : (
+              <div
+                style={{
+                  height: `${dimensions.height}px`,
+                  width: toPx(dimensions.width),
+                  borderRadius: "100px",
+                  boxShadow: isPressed
+                    ? "0 0 0 1px rgba(255,255,255,0.12), 0px 0px 0px 1px rgba(0, 0, 0, 0.5), 0px 1px 2px 0px rgba(0, 0, 0, 0.3)"
+                    : isHovered
+                      ? "0 0 0 1px rgba(255,255,255,0.2), 0px 0px 0px 1px rgba(0, 0, 0, 0.4), 0px 12px 6px 0px rgba(0, 0, 0, 0.05), 0px 8px 5px 0px rgba(0, 0, 0, 0.1), 0px 4px 4px 0px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.2)"
+                      : "0 0 0 1px rgba(255,255,255,0.15), 0px 0px 0px 1px rgba(0, 0, 0, 0.3), 0px 36px 14px 0px rgba(0, 0, 0, 0.02), 0px 20px 12px 0px rgba(0, 0, 0, 0.08), 0px 9px 9px 0px rgba(0, 0, 0, 0.12), 0px 2px 5px 0px rgba(0, 0, 0, 0.15)",
+                  transition:
+                    "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.4s ease, height 0.4s ease, box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+                  background: "rgb(0 0 0 / 0)",
+                }}
+              >
+                <div
+                  ref={shaderRef}
+                  className="shader-container-exploded"
+                  style={{
+                    borderRadius: "100px",
+                    overflow: "hidden",
+                    position: "relative",
+                    width: toPx(dimensions.shaderWidth),
+                    maxWidth: toPx(dimensions.shaderWidth),
+                    height: `${dimensions.shaderHeight}px`,
+                    transition: "width 0.4s ease, height 0.4s ease",
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {isLink ? (

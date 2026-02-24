@@ -8,19 +8,25 @@ export const NetworkConfigSchema = z.object({
 
 export type NetworkConfig = z.infer<typeof NetworkConfigSchema>;
 
-/** Mainnet config. This project is mainnet-only. */
+/** Mainnet config. */
 export const mainnet: NetworkConfig = {
   horizonUrl: "https://horizon.stellar.org",
   sorobanRpcUrl: "https://soroban-rpc.mainnet.stellar.gateway.fm",
 };
 
-export const networks = { mainnet } as const;
+/** Testnet config. */
+export const testnet: NetworkConfig = {
+  horizonUrl: "https://horizon-testnet.stellar.org",
+  sorobanRpcUrl: "https://soroban-testnet.stellar.org",
+  friendbotUrl: "https://friendbot.stellar.org",
+};
+
+export const networks = { mainnet, testnet } as const;
 export type NetworkName = keyof typeof networks;
 
-/** Returns mainnet config. This project is mainnet-only. */
+/** Returns network config for mainnet or testnet. */
 export function getNetworkConfig(name?: string): NetworkConfig {
-  if (name && name !== "mainnet") {
-    throw new Error("This project is mainnet-only. Use network: 'mainnet'.");
-  }
+  const key = (name ?? "mainnet").toLowerCase();
+  if (key === "testnet") return testnet;
   return mainnet;
 }

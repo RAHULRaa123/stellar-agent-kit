@@ -88,19 +88,48 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
           setAccount((prev) => {
             // Don’t restore account from poll when user has disconnected (prev === null)
             if (prev === null) return null
+            
+            // Check if network changed and notify user
+            if (prev && next && prev.network !== next.network) {
+              console.log(`Wallet network changed from ${prev.network} to ${next.network}`)
+              // The network mismatch dialogs in components will handle this
+            }
+            
             return next
           })
         })
         .catch(() => {
           setAccount((prev) => (prev !== null ? null : prev))
         })
-    }, 30000)
+    }, 5000) // Check more frequently (5s instead of 30s) to catch network changes faster
     return () => clearInterval(interval)
   }, [])
+
+  // Listen for Freighter extension events for faster network change detection
+  useEffect(() => {
+    const handleFreighterEvent = () => {
+      console.log("Freighter event detected, refreshing account...")
+      refreshAccount()
+    }
+
+    // Try to listen for Freighter extension events
+    if (typeof window !== "undefined" && window.addEventListener) {
+      window.addEventListener("freighter-network-changed", handleFreighterEvent)
+      window.addEventListener("freighter-account-changed", handleFreighterEvent)
+    }
+
+    return () => {
+      if (typeof window !== "undefined" && window.removeEventListener) {
+        window.removeEventListener("freighter-network-changed", handleFreighterEvent)
+        window.removeEventListener("freighter-account-changed", handleFreighterEvent)
+      }
+    }
+  }, [refreshAccount])
 
   const connect = useCallback(async () => {
     setIsLoading(true)
     try {
+      // Always request fresh permission on manual connection
       const accessResult = await requestAccess()
       if (accessResult.error) throw new Error(accessResult.error)
 

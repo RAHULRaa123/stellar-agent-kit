@@ -11,8 +11,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, TrendingUp, TrendingDown, Info, CheckCircle, XCircle } from "lucide-react"
 import { useAccount } from "@/hooks/use-account"
 import { useBalance } from "@/hooks/use-balance"
+import { useNetworkProfile } from "@/contexts/network-profile-context"
+import { NetworkMismatchDialog } from "./network-mismatch-dialog"
+import { isNetworkMismatch } from "@/lib/network-validation"
+import { sdkApiHeaders } from "@/lib/get-devkit-app-id"
 import { MAINNET_ASSETS } from "stellar-agent-kit"
 import { normalizeNetwork } from "@/lib/network"
+import { toast } from "sonner"
 
 // Use official mainnet contract IDs from stellar-agent-kit (valid StrKey format for Blend SDK)
 const BLEND_ASSETS = [
@@ -82,7 +87,8 @@ function parseBlendError(errorMessage: string, operation: 'supply' | 'borrow' = 
 }
 
 export function BlendInterface() {
-  const { account, publicKey, isConnected, signTransaction } = useAccount()
+  const { account, publicKey, isConnected, signTransaction, disconnect } = useAccount()
+  const { network: profileNetwork, setNetwork } = useNetworkProfile()
   const [supplyState, setSupplyState] = useState<SupplyBorrowState>({
     asset: BLEND_ASSETS[0],
     amount: "",
@@ -97,6 +103,10 @@ export function BlendInterface() {
   })
   const [transactions, setTransactions] = useState<BlendTransaction[]>([])
   const [poolId, setPoolId] = useState<string>(DEFAULT_POOL_ID)
+  const [showNetworkMismatch, setShowNetworkMismatch] = useState(false)
+
+  // Check for network mismatch
+  const hasNetworkMismatch = account && isNetworkMismatch(account.network, profileNetwork)
   const { getBalance, isLoading: balanceLoading, error: balanceError } = useBalance()
 
   const selectedPool = BLEND_POOLS.find(p => p.id === poolId) ?? BLEND_POOLS[0]
@@ -108,13 +118,19 @@ export function BlendInterface() {
       return
     }
 
+    // Check for network mismatch before proceeding
+    if (hasNetworkMismatch) {
+      setShowNetworkMismatch(true)
+      return
+    }
+
     setSupplyState(prev => ({ ...prev, isLoading: true, error: null }))
 
     try {
       // Build supply transaction
       const response = await fetch("/api/lending/supply", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: sdkApiHeaders(),
         body: JSON.stringify({
           publicKey,
           asset: supplyState.asset.contractId,
@@ -139,7 +155,7 @@ export function BlendInterface() {
       const network = account ? normalizeNetwork(account.network) : "mainnet"
       const submitResponse = await fetch("/api/lending/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: sdkApiHeaders(),
         body: JSON.stringify({ 
           signedXdr,
           network 
@@ -191,6 +207,12 @@ export function BlendInterface() {
       return
     }
 
+    // Check for network mismatch before proceeding
+    if (hasNetworkMismatch) {
+      setShowNetworkMismatch(true)
+      return
+    }
+
     // Check if user has supplied any assets first
     const hasSuppliedAssets = transactions.some(tx => tx.type === "supply" && tx.status === "success")
     if (!hasSuppliedAssets) {
@@ -207,7 +229,7 @@ export function BlendInterface() {
       // Build borrow transaction
       const response = await fetch("/api/lending/borrow", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: sdkApiHeaders(),
         body: JSON.stringify({
           publicKey,
           asset: borrowState.asset.contractId,
@@ -232,7 +254,7 @@ export function BlendInterface() {
       const network = account ? normalizeNetwork(account.network) : "mainnet"
       const submitResponse = await fetch("/api/lending/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: sdkApiHeaders(),
         body: JSON.stringify({ 
           signedXdr,
           network 
@@ -641,6 +663,26 @@ export function BlendInterface() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Network Mismatch Dialog */}
+      {account && (
+        <NetworkMismatchDialog
+          open={showNetworkMismatch}
+          onOpenChange={setShowNetworkMismatch}
+          walletNetwork={account.network}
+          appNetwork={profileNetwork}
+          onSwitchApp={() => {
+            setNetwork(account.network as "mainnet" | "testnet")
+            setShowNetworkMismatch(false)
+            toast.success(`Switched app to ${account.network}`)
+          }}
+          onDisconnect={() => {
+            disconnect()
+            setShowNetworkMismatch(false)
+            toast.success("Wallet disconnected")
+          }}
+        />
       )}
     </div>
   )

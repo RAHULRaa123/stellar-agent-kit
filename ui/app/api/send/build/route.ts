@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireActivePlan } from "@/lib/require-active-plan";
 import { Asset, TransactionBuilder, Operation, Networks, Horizon } from "@stellar/stellar-sdk";
 import { getNetworkConfig } from "@/lib/agent-kit/config/networks";
 
 export async function POST(request: NextRequest) {
+  const auth = requireActivePlan(request);
+  if (auth instanceof NextResponse) return auth;
   try {
-    const { fromAddress, to, amount, assetCode, assetIssuer } = await request.json();
+    const { fromAddress, to, amount, assetCode, assetIssuer, network } = await request.json();
 
     if (!fromAddress || !to || amount == null || amount === "") {
       return NextResponse.json(
@@ -13,9 +16,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = getNetworkConfig();
+    const config = getNetworkConfig(network);
     const horizon = new Horizon.Server(config.horizonUrl);
-    const networkPassphrase = Networks.PUBLIC;
+    const networkPassphrase = network === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
 
     const sourceAccount = await horizon.loadAccount(fromAddress);
     const asset =
