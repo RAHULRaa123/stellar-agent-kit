@@ -16,6 +16,7 @@ import { NetworkSelector } from "./network-selector"
 const NAV_LINKS = [
   { href: "/docs", label: "Docs" },
   { href: "/devkit", label: "DevKit" },
+  { href: "/extensions", label: "Extensions" },
   { href: "/onboarding", label: "Onboarding" },
   { href: "/pricing", label: "Pricing" },
 ]

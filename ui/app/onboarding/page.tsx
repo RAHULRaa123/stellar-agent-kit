@@ -36,6 +36,69 @@ function FadeInSection({ children, className }: { children: ReactNode; className
     </motion.div>
   )
 }
+
+const YOUTUBE_EMBED_ID = "CIQmLbRngx0"
+const YOUTUBE_EMBED_BASE = `https://www.youtube.com/embed/${YOUTUBE_EMBED_ID}`
+
+function YouTubeVideoSection() {
+  const [playing, setPlaying] = useState(false)
+
+  return (
+    <section className="relative border-b border-zinc-800/50 px-4 py-20 sm:py-28 overflow-visible">
+      <FadeInSection className="mx-auto max-w-5xl overflow-visible">
+        <div className="space-y-4 text-center mb-12">
+          <h2
+            className="text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl"
+            style={{ fontFamily: "var(--font-space-grotesk)" }}
+          >
+            See it in action
+          </h2>
+          <p className="mx-auto max-w-xl text-zinc-400">
+            Watch how to build on Stellar from scratch in minutes.
+          </p>
+        </div>
+        <div className="relative w-full rounded-2xl border border-zinc-800/80 shadow-2xl shadow-black/60 overflow-hidden" style={{ aspectRatio: "16/9" }}>
+          <iframe
+            src={playing ? `${YOUTUBE_EMBED_BASE}?autoplay=1` : YOUTUBE_EMBED_BASE}
+            title="Build on Stellar"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            loading="lazy"
+          />
+          {/* Overlay captures pointer so page scroll is never trapped by the iframe */}
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center"
+            style={{ pointerEvents: "auto" }}
+            aria-hidden
+          >
+            {!playing && (
+              <button
+                type="button"
+                onClick={() => setPlaying(true)}
+                className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition hover:scale-105 hover:bg-red-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                aria-label="Play video"
+              >
+                <svg className="h-8 w-8 sm:h-10 sm:w-10 ml-1" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+        <a
+          href={`https://www.youtube.com/watch?v=${YOUTUBE_EMBED_ID}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          Watch on YouTube
+        </a>
+      </FadeInSection>
+    </section>
+  )
+}
+
 const NUMBERS_HEADLINE = "Let's build something great."
 const NUMBERS_DESCRIPTION =
   "Stellar powers fast, low-cost payments and DeFi at scale. Join thousands of projects and developers building on a network designed for the real world."
@@ -255,32 +318,7 @@ export default function OnboardingPage() {
             </FadeInSection>
           </section>
 
-          {/* YouTube Video */}
-          <section className="relative border-b border-zinc-800/50 px-4 py-20 sm:py-28 overflow-visible">
-            <FadeInSection className="mx-auto max-w-5xl overflow-visible">
-              <div className="space-y-4 text-center mb-12">
-                <h2
-                  className="text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl"
-                  style={{ fontFamily: "var(--font-space-grotesk)" }}
-                >
-                  See it in action
-                </h2>
-                <p className="mx-auto max-w-xl text-zinc-400">
-                  Watch how to build on Stellar from scratch in minutes.
-                </p>
-              </div>
-              <div className="relative w-full rounded-2xl border border-zinc-800/80 shadow-2xl shadow-black/60 overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                <iframe
-                  src="https://www.youtube.com/embed/CIQmLbRngx0"
-                  title="Build on Stellar"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full pointer-events-auto"
-                  loading="lazy"
-                />
-              </div>
-            </FadeInSection>
-          </section>
+          <YouTubeVideoSection />
 
           {/* Stellar by the Numbers — two columns: big headline + paragraph left, 2x2 stats right (no box) */}
           <section id="numbers" className="relative scroll-mt-24 border-b border-zinc-800/50 px-4 py-20 sm:py-28">

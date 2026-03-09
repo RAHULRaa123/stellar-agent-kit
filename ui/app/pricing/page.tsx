@@ -87,6 +87,21 @@ export default function PricingPage() {
       .catch(() => {})
   }, [searchParams, successChecked])
 
+  // Suppress the iFrameResizer origin-check console error that the Dodo
+  // Payments SDK throws when messages arrive from test.checkout.dodopayments.com.
+  // The SDK hardcodes checkOrigin to its base domain but the iframe posts from
+  // the checkout subdomain — there is no public API to fix this mismatch.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const original = console.error.bind(console)
+    console.error = (...args: unknown[]) => {
+      const msg = typeof args[0] === "string" ? args[0] : ""
+      if (msg.includes("Unexpected message received from") && msg.includes("dodo-checkout-iframe")) return
+      original(...args)
+    }
+    return () => { console.error = original }
+  }, [])
+
   // Inline checkout: when we have a checkout URL, load SDK and open in container
   useEffect(() => {
     if (!inlineCheckoutUrl || typeof window === "undefined") return
