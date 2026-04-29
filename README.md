@@ -137,3 +137,7 @@ Contributions are welcome. Open an issue or a pull request; for larger changes, 
 ## License
 
 [MIT](LICENSE)
+## Improvements
+
+- Improved documentation clarity
+- Added better explanation for AI-powered DeFi workflows
